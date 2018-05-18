@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/pbkdf2"
-	"os"
 	"sync"
 )
 
@@ -38,13 +37,17 @@ func main() {
 		wg.Add(1)
 		go force(fmt.Sprintf("%04d", i), result, bSalt, bKey)
 	}
-	select {
-	case pass := <-result:
-		log.Printf("pass is %s", pass)
-		os.Exit(0)
-	case <-wait():
-		log.Fatalf("could not find pass")
+
+	go func() {
+		defer close(result)
+		wg.Wait()
+	}()
+
+	pass, ok := <-result
+	if !ok {
+		log.Fatalf("could not find password. Did you copy the values properly?")
 	}
+	log.Printf("pass is %s", pass)
 }
 
 func wait() chan int {
@@ -57,11 +60,10 @@ func wait() chan int {
 }
 
 func force(pass string, result chan string, bSalt []byte, bKey []byte) {
+	defer wg.Done()
 	k := pbkdf2.Key([]byte(pass), bSalt, 1000, 20, sha1.New)
 	log.Printf("pass %s gives %s", pass, base64.StdEncoding.EncodeToString(k))
 	if bytes.Equal(k, bKey) {
 		result <- pass
-		close(result)
 	}
-	wg.Done()
 }
