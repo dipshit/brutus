@@ -25,11 +25,11 @@ func init() {
 
 func main() {
 	bSalt, err := base64.StdEncoding.DecodeString(salt)
-	if err != nil {
+	if err != nil || salt == "" {
 		log.Fatalf("bad salt; could not be decoded")
 	}
 	bKey, err := base64.StdEncoding.DecodeString(key)
-	if err != nil {
+	if err != nil || key == "" {
 		log.Fatalf("bad key; could not be decoded")
 	}
 	result := make(chan string)
@@ -48,15 +48,6 @@ func main() {
 		log.Fatalf("could not find password. Did you copy the values properly?")
 	}
 	log.Printf("pass is %s", pass)
-}
-
-func wait() chan int {
-	done := make(chan int)
-	go func() {
-		wg.Wait()
-		done <- 0
-	}()
-	return done
 }
 
 func force(pass string, result chan string, bSalt []byte, bKey []byte) {
