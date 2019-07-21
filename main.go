@@ -53,7 +53,7 @@ func main() {
 func force(pass string, result chan string, bSalt []byte, bKey []byte) {
 	defer wg.Done()
 	k := pbkdf2.Key([]byte(pass), bSalt, 1000, 20, sha1.New)
-	log.Printf("pass %s gives %s", pass, base64.StdEncoding.EncodeToString(k))
+	log.Debugf("pass %s gives %s", pass, base64.StdEncoding.EncodeToString(k))
 	if bytes.Equal(k, bKey) {
 		result <- pass
 	}
